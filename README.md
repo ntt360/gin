@@ -15,3 +15,11 @@
    3. regex: 正则验证器
 9. 废弃部分不常用验证器 【 &check; 】
 10. 重新实现 required_if 验证器 【 &check; 】
+
+## 1.1.0
+
+1. 迁移 ginx core 核心功能；
+2. utils 工具函数封装；
+3. jsonp callback验证处理
+4. 常用middleware内置；
+5. ctx rsp扩展服务内置；
