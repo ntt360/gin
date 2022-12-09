@@ -15,6 +15,7 @@
    3. regex: 正则验证器
 9. 废弃部分不常用验证器 【 &check; 】
 10. 重新实现 required_if 验证器 【 &check; 】
+11. 内置 gzip middleware
 
 ## 1.1.0
 
