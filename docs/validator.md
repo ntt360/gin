@@ -1,5 +1,11 @@
 # validator
 
+1. [如何使用](https://github.com/ntt360/gin/blob/master/docs/validator.md#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8)
+2. [示例](https://github.com/ntt360/gin/blob/master/docs/validator.md#%E7%A4%BA%E4%BE%8B)
+3. [支持的验证函数]()
+4. [自定义错误消息]()
+5. [valid.Error说明]()
+
 我们对 `gin` 的官网验证器进行了重写，解决了如下一些问题：
 
 1. 支持自定义错误消息；
@@ -162,7 +168,7 @@ type Params struct {
 }
 ```
 
-如上的 `name` 参数支持正则验证，验证规则为：`^\\w{8,20}$`
+如上的 `name` 参数需要满足正则规则：`^\\w{8,20}$`
 
 
 ### mobile
@@ -172,3 +178,103 @@ type Params struct {
 ### idcard
 
 大陆的身份证号验证
+
+## 自定义错误消息
+
+很多时候我们都需要自定义错误消息，所以我们增加了一个：`msg` 标签来满足该需求，由于 `POST` `JSON` `body` 支持无线嵌套数据，所以 `msg` 消息也较为复杂，我们尽量简单描述如何使用它。
+
+### 全局错误消息
+
+如果你仅仅希望每个字段多个验证规则，均使用同一个自定义错误时，那么这种方式使用是比较简单的：
+
+```go
+type Params struct {
+	Name string `form:"name" pattern:"^\\w{8,20}$" binding:"required,min=1,max=20,regex" msg:"name参数不正确"`
+}
+```
+
+如上的 `name` 字段有4个验证规则函数，都返回同一个错误消息：`name参数不正确`
+
+### 每个验证规则返回错误
+
+```go
+type Params struct {
+	Name string `form:"name" pattern:"^\\w{8,20}$" binding:"required,min=1,max=3,regex" msg:"default='name参数不合法',required='name参数必填',min='name长度必须大于1',max='name长度不超过3个字符'"`
+}
+```
+
+上面便是为多个验证规则提供不同的错误消息，当都不匹配时（regex验证不过），会使用一个 `default='xxx'` 默认错误消息。
+
+验证结果：
+
+```shell
+curl 'http://xxxx/?'          # 返回错误：name参数必填
+curl 'http://xxxx/?name='     # 返回错误：name长度必须大于1
+curl 'http://xxxx/?name=1234' # 返回错误：name长度不超过3个字符
+curl 'http://xxxx/>name=#$%^' # 返回错误：name参数不合法
+```
+
+`default` 默认错误消息，并非必须，如果不存在，则会使用内置的错误消息：`the param name not valid`
+
+需要注意的是：针对每个验证函数的自定义错误的，一定需要使用单引号包含错误消息内容：required='错误消息内容'
+
+```shell
+# 正确定义方式
+requierd='错误消息'
+
+# 错误定义方式
+required=错误消息
+```
+
+之所以需要单引号，主要是因为消息的拆分使用了正则表达式拆分多个错误内容，单引号是判断边界，当使用全局错误消息时没有此要求。
+
+### 验证规则重复处理: > 符号
+
+有时候很存在多个验证器名称重复，此时如果使用规则错误会有些问题，例如：
+
+```go
+type Params struct {
+	Name [][]string `json:"name" binding:"min=1,dive,min=3,dive,min=10" msg:""`
+}
+```
+
+如上的验证规则中，`min=1` 用于验证 `name` 数组本身长度必须大于等于1，`min=3` 用于验证数组中的第二层数组长度必须要大于3个字符。第三层要求具体元素长度比如不小于10。但此时我们发觉，验证器规则出现了3个`min`验证函数，那此时我们如果定义错误消息呢？
+
+所以我们引入了 `>` 符号用于描述当前验证器路径层次关系。，所以此时的错误消息定义如下：
+
+```shell
+msg:"min='数组至少1个元素',>min='子数组不少于3元素',>>min='元素长度必须不少于10个字符'"
+```
+
+## valid.Error 说明
+
+验证器我们定义了一个 `valid.Error` 错误类型，默认的错误消息有两种消息类型：1.具体参数类错误 2. 全局的错误；错误默认消息内容如下。
+
+```shell
+# 具体参数字段错误
+the param xx not valid
+
+# 全局错误，如请求参数格式不正确，但不涉及某个具体字段，如请求json不合法。
+request data is not valid json
+
+# 其它全局错误
+...
+```
+
+我们隐藏了具体参数是因为哪个验证器规则导致的错误，但会在返回的`valid.Error`有对应的字段予以标识，你可以通过反解 `err`，或者使用`%+v`输出符号打印出更明细的错误内容用以记录错误日志：
+
+```go
+e := ctx.Valid(&rel)
+if e != nil {
+  var validErr *valid.Error
+  if errors.As(e, &validErr) {
+      fmt.Printf("%+v", e) // 输出错误详细内容
+  }
+    
+  // 前端仅返回错误概述或自定义错误，避免系统实现暴露
+  rsp.JSONErr(ctx, &rsp.Values{Msg: e.Error()})
+  return
+}
+```
+
+
