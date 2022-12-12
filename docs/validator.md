@@ -2,9 +2,9 @@
 
 1. [如何使用](https://github.com/ntt360/gin/blob/master/docs/validator.md#%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8)
 2. [示例](https://github.com/ntt360/gin/blob/master/docs/validator.md#%E7%A4%BA%E4%BE%8B)
-3. [支持的验证函数]()
-4. [自定义错误消息]()
-5. [valid.Error说明]()
+3. [支持的验证函数](https://github.com/ntt360/gin/blob/master/docs/validator.md#%E6%94%AF%E6%8C%81%E7%9A%84%E9%AA%8C%E8%AF%81%E5%87%BD%E6%95%B0)
+4. [自定义错误消息](https://github.com/ntt360/gin/blob/master/docs/validator.md#%E8%87%AA%E5%AE%9A%E4%B9%89%E9%94%99%E8%AF%AF%E6%B6%88%E6%81%AF)
+5. [valid.Error说明](https://github.com/ntt360/gin/blob/master/docs/validator.md#validerror-%E8%AF%B4%E6%98%8E)
 
 我们对 `gin` 的官网验证器进行了重写，解决了如下一些问题：
 
@@ -113,10 +113,10 @@ type Params struct {
 验证结果
 
 ```shell
-curl --url 'http://xxxx/?' # 验证不通过
+curl --url 'http://xxxx/?'        # 验证不通过
 
-curl --url 'http://xxxx/?page=0' # 验证通过
-curl --url 'http://xxxx/?page=1' # 验证通过
+curl --url 'http://xxxx/?page=0'  # 验证通过
+curl --url 'http://xxxx/?page=1'  # 验证通过
 ```
 
 ### required_if
@@ -152,10 +152,10 @@ type Params struct {
 验证结果
 
 ```shell
-curl 'http://xxxx/?num=1' # 验证通过
-curl 'http://xxxx/?num=2&page=1' # 验证通过
+curl 'http://xxxx/?num=1'         # 验证通过
+curl 'http://xxxx/?num=2&page=1'  # 验证通过
 
-curl 'http://xxxx:3000/?num=2' # 验证不通过
+curl 'http://xxxx:3000/?num=2'    # 验证不通过
 ```
 
 ### regex
@@ -260,6 +260,8 @@ request data is not valid json
 # 其它全局错误
 ...
 ```
+
+如果自定义了错误消息，会覆盖默认的系统参数错误提示，但不会覆盖全局类的错误。
 
 我们隐藏了具体参数是因为哪个验证器规则导致的错误，但会在返回的`valid.Error`有对应的字段予以标识，你可以通过反解 `err`，或者使用`%+v`输出符号打印出更明细的错误内容用以记录错误日志：
 
