@@ -66,10 +66,10 @@ func Form(ctx *gin.Context) {
 
 ## 支持的验证函数
 
-我们复用了原有的 `validor` 内置验证函数，所以实现了绝大部分验证函数，但有小部分不常用的验证函数尚未实现，已实现函数列表如下：
+我们复用了原有的 `validator` 内置验证函数，所以实现了绝大部分验证函数，但有小部分不常用的验证函数尚未实现，已实现函数列表如下：
 
-[required]()   
-[required_if]()
+[required](https://github.com/ntt360/gin/blob/master/docs/validator.md#required)   
+[required_if](https://github.com/ntt360/gin/blob/master/docs/validator.md#required_if)
 
 
 ### required
