@@ -129,3 +129,13 @@ func IntEqual(a, b []int) bool {
 
 	return true
 }
+
+// Pos get the element index in slice
+func Pos(slice []string, value string) int {
+	for p, v := range slice {
+		if v == value {
+			return p
+		}
+	}
+	return -1
+}
