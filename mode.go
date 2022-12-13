@@ -44,13 +44,18 @@ var DefaultWriter io.Writer = os.Stdout
 var DefaultErrorWriter io.Writer = os.Stderr
 
 var (
-	ginMode  = debugCode
-	modeName = DebugMode
+	ginMode            = debugCode
+	modeName           = DebugMode
+	jsonpCallbackRegex = "^[\\w-.]{1,30}$"
 )
 
 func init() {
 	mode := os.Getenv(EnvGinMode)
 	SetMode(mode)
+}
+
+func SetJSONPCallbackRegex(pattern string) {
+	jsonpCallbackRegex = pattern
 }
 
 // SetMode sets gin mode according to input string.

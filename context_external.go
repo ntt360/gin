@@ -1,8 +1,13 @@
 package gin
 
 import (
+	"github.com/ntt360/gin/internal/rsp"
 	"github.com/ntt360/gin/internal/valid/binding"
+	"github.com/ntt360/gin/render"
+	r "github.com/ntt360/gin/rsp"
 	"io"
+	"net/http"
+	"regexp"
 )
 
 func (c *Context) Valid(obj any) error {
@@ -51,4 +56,75 @@ func (c *Context) ValidBodyWith(obj any, bb binding.BindingBody) (err error) {
 		c.Set(BodyBytesKey, body)
 	}
 	return bb.BindBody(body, obj)
+}
+
+// JSONOk response json success data.
+func (c *Context) JSONOk(val ...rsp.JSVal) {
+	rel := &rsp.JSONVal{
+		Code: r.CodeOK,
+		Msg:  r.MsgSuccess,
+	}
+
+	for _, jsonVal := range val {
+		jsonVal(rel)
+	}
+
+	c.JSON(http.StatusOK, rel)
+}
+
+// JSONErr response json error data.
+func (c *Context) JSONErr(val ...rsp.JSVal) {
+	rel := &rsp.JSONVal{
+		Code: r.CodeErr,
+		Msg:  r.MsgFailed,
+	}
+
+	for _, jsonVal := range val {
+		jsonVal(rel)
+	}
+
+	c.JSON(http.StatusOK, rel)
+}
+
+// JSONPOk response jsonp success data.
+func (c *Context) JSONPOk(val ...rsp.JSVal) {
+	rel := &rsp.JSONVal{
+		Code: r.CodeOK,
+		Msg:  r.MsgSuccess,
+	}
+
+	for _, jsonVal := range val {
+		jsonVal(rel)
+	}
+
+	c.safeJsonP(http.StatusOK, rel)
+}
+
+// JSONPErr response jsonp error data.
+func (c *Context) JSONPErr(val ...rsp.JSVal) {
+	rel := &rsp.JSONVal{
+		Code: r.CodeErr,
+		Msg:  r.MsgFailed,
+		Data: nil,
+	}
+
+	for _, jsonVal := range val {
+		jsonVal(rel)
+	}
+
+	c.safeJsonP(http.StatusOK, rel)
+}
+
+func (c *Context) safeJsonP(code int, obj interface{}) {
+	callback := c.DefaultQuery("callback", "")
+	if callback == "" {
+		c.Render(code, render.JSON{Data: obj})
+		return
+	}
+
+	if !regexp.MustCompile(jsonpCallbackRegex).MatchString(callback) {
+		callback = "callback"
+	}
+
+	c.Render(code, render.JsonpJSON{Callback: callback, Data: obj})
 }
