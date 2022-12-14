@@ -17,6 +17,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -959,6 +960,12 @@ func (c *Context) JSONP(code int, obj any) {
 		c.Render(code, render.JSON{Data: obj})
 		return
 	}
+
+	if !regexp.MustCompile(jsonpCallbackRegex).MatchString(callback) {
+		c.AbortWithStatus(http.StatusForbidden)
+		return
+	}
+
 	c.Render(code, render.JsonpJSON{Callback: callback, Data: obj})
 }
 

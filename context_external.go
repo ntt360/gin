@@ -3,11 +3,9 @@ package gin
 import (
 	"github.com/ntt360/gin/internal/rsp"
 	"github.com/ntt360/gin/internal/valid/binding"
-	"github.com/ntt360/gin/render"
 	r "github.com/ntt360/gin/rsp"
 	"io"
 	"net/http"
-	"regexp"
 )
 
 func (c *Context) Valid(obj any) error {
@@ -97,7 +95,7 @@ func (c *Context) JSONPOk(val ...rsp.JSVal) {
 		jsonVal(rel)
 	}
 
-	c.safeJsonP(http.StatusOK, rel)
+	c.JSONP(http.StatusOK, rel)
 }
 
 // JSONPErr response jsonp error data.
@@ -112,19 +110,5 @@ func (c *Context) JSONPErr(val ...rsp.JSVal) {
 		jsonVal(rel)
 	}
 
-	c.safeJsonP(http.StatusOK, rel)
-}
-
-func (c *Context) safeJsonP(code int, obj interface{}) {
-	callback := c.DefaultQuery("callback", "")
-	if callback == "" {
-		c.Render(code, render.JSON{Data: obj})
-		return
-	}
-
-	if !regexp.MustCompile(jsonpCallbackRegex).MatchString(callback) {
-		callback = "callback"
-	}
-
-	c.Render(code, render.JsonpJSON{Callback: callback, Data: obj})
+	c.JSONP(http.StatusOK, rel)
 }
