@@ -41,7 +41,7 @@ func WithGrpcOption(runner GrpcRunner) RunnerOption {
 		// grpc server
 		if s.config.Grpc.Enable {
 			s.wg.Add(1)
-			s.ls = append(s.ls, fmt.Sprintf(" - Grpc  Server: %s\n", aurora.Bold(aurora.Cyan("tcp://"+app.Config.Grpc.Listen))))
+			s.ls = append(s.ls, fmt.Sprintf(" - Grpc  Server: %s\n", aurora.Bold(aurora.Cyan("tcp://"+s.config.Grpc.Listen))))
 			s.grpc = runner
 
 			go func() {
@@ -56,7 +56,7 @@ func WithHttpOption(runner HttpRunner) RunnerOption {
 	return func(s *Server) {
 		if s.config.HTTP.Enable {
 			s.wg.Add(1)
-			s.ls = append(s.ls, fmt.Sprintf(" - HTTP  Server: %s\n", aurora.Bold(aurora.Cyan("http://"+app.Config.HTTP.Listen))))
+			s.ls = append(s.ls, fmt.Sprintf(" - HTTP  Server: %s\n", aurora.Bold(aurora.Cyan("http://"+s.config.HTTP.Listen))))
 			s.http = runner
 
 			go func() {
@@ -71,7 +71,7 @@ func WithHttpsOption(runner HttpRunner) RunnerOption {
 	return func(s *Server) {
 		if s.config.HTTPS.Enable {
 			s.wg.Add(1)
-			s.ls = append(s.ls, fmt.Sprintf(" - HTTPS Server: %s\n", aurora.Bold(aurora.Cyan("https://"+app.Config.HTTPS.Listen))))
+			s.ls = append(s.ls, fmt.Sprintf(" - HTTPS Server: %s\n", aurora.Bold(aurora.Cyan("https://"+s.config.HTTPS.Listen))))
 			s.https = runner
 
 			go func() {
@@ -94,10 +94,6 @@ func Run(config *config.Model, option ...RunnerOption) {
 		time.Sleep(time.Second * 1)
 		fmt.Printf("\n\nApp Is Running At :\n%s\n", strings.Join(s.ls, ""))
 	}()
-
-	for _, runnerOption := range option {
-		runnerOption(s)
-	}
 
 	// pprof
 	if s.config.PProf.Enable {
