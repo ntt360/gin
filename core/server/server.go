@@ -21,10 +21,12 @@ type Server struct {
 	task        TaskRunner
 }
 
+var runners []RunnerOption
+
 type RunnerOption func(s *Server)
 
-func WithTaskRunnerOption(task TaskRunner) RunnerOption {
-	return func(s *Server) {
+func RegisterTaskRunner(task TaskRunner) {
+	r := func(s *Server) {
 		// 注册task任务，需要配置 app.Config.yaml task[enable] = true
 		if s.config.Task.Enable {
 			s.wg.Add(1)
@@ -34,10 +36,12 @@ func WithTaskRunnerOption(task TaskRunner) RunnerOption {
 			}()
 		}
 	}
+
+	runners = append(runners, r)
 }
 
-func WithGrpcOption(runner GrpcRunner) RunnerOption {
-	return func(s *Server) {
+func RegisterGrpcRunner(runner GrpcRunner) {
+	r := func(s *Server) {
 		// grpc server
 		if s.config.Grpc.Enable {
 			s.wg.Add(1)
@@ -50,10 +54,12 @@ func WithGrpcOption(runner GrpcRunner) RunnerOption {
 			}()
 		}
 	}
+
+	runners = append(runners, r)
 }
 
-func WithHttpOption(runner HttpRunner) RunnerOption {
-	return func(s *Server) {
+func RegisterHttpRunner(runner HttpRunner) {
+	r := func(s *Server) {
 		if s.config.HTTP.Enable {
 			s.wg.Add(1)
 			s.ls = append(s.ls, fmt.Sprintf(" - HTTP  Server: %s\n", aurora.Bold(aurora.Cyan("http://"+s.config.HTTP.Listen))))
@@ -65,10 +71,12 @@ func WithHttpOption(runner HttpRunner) RunnerOption {
 			}()
 		}
 	}
+
+	runners = append(runners, r)
 }
 
-func WithHttpsOption(runner HttpRunner) RunnerOption {
-	return func(s *Server) {
+func RegisterHttpsRunner(runner HttpRunner) {
+	r := func(s *Server) {
 		if s.config.HTTPS.Enable {
 			s.wg.Add(1)
 			s.ls = append(s.ls, fmt.Sprintf(" - HTTPS Server: %s\n", aurora.Bold(aurora.Cyan("https://"+s.config.HTTPS.Listen))))
@@ -80,13 +88,19 @@ func WithHttpsOption(runner HttpRunner) RunnerOption {
 			}()
 		}
 	}
+
+	runners = append(runners, r)
 }
 
 // Run init all server
-func Run(config *config.Model, option ...RunnerOption) {
+func Run(config *config.Model) {
 	s := &Server{
 		config: config,
 		wg:     sync.WaitGroup{},
+	}
+
+	for _, runner := range runners {
+		runner(s)
 	}
 
 	go func() {
