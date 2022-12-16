@@ -16,7 +16,6 @@ require (
 	github.com/leodido/go-urn v1.2.1
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-isatty v0.0.16
-	github.com/ntt360/errors v0.9.5
 	github.com/opentracing/opentracing-go v1.2.0
 	github.com/pelletier/go-toml/v2 v2.0.6
 	github.com/prometheus/client_golang v1.14.0

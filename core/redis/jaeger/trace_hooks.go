@@ -2,12 +2,12 @@ package jaeger
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/go-redis/redis/extra/rediscmd/v8"
 	"github.com/go-redis/redis/v8"
 	"github.com/ntt360/gin"
 
-	"github.com/ntt360/errors"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 )
