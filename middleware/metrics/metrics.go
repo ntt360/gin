@@ -4,9 +4,13 @@ import (
 	"github.com/ntt360/gin"
 	"github.com/ntt360/gin/core/config"
 	"github.com/prometheus/client_golang/prometheus"
+	"sync"
 
 	"strconv"
 )
+
+var pOnce sync.Once
+var prom *Prometheus
 
 type Prometheus struct {
 	requestTotal *prometheus.CounterVec
@@ -14,15 +18,20 @@ type Prometheus struct {
 }
 
 func NewPrometheus(config *config.Model) *Prometheus {
-	requestTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
-		Name:        "request_total",
-		ConstLabels: map[string]string{"env": config.Env},
-	}, []string{
-		"status", "method", "uri",
-	})
-	prometheus.MustRegister(requestTotal)
+	pOnce.Do(func() {
+		requestTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
+			Name:        "request_total",
+			ConstLabels: map[string]string{"env": config.Env},
+		}, []string{
+			"status", "method", "uri",
+		})
+		prometheus.MustRegister(requestTotal)
 
-	return &Prometheus{requestTotal: requestTotal, defaultPath: config.Metrics.DefaultPath()}
+		prom = &Prometheus{requestTotal: requestTotal, defaultPath: config.Metrics.DefaultPath()}
+
+	})
+
+	return prom
 }
 
 func (p *Prometheus) HandleFunc() gin.HandlerFunc {

@@ -179,6 +179,7 @@ func writeData(c *gin.Context, config *config.Model, start time.Time, raw string
 	param := gin.LogFormatterParams{
 		Request: c.Request,
 		Keys:    c.Keys,
+		IsTerm:  config.WebServerLog.Output == "stdout" || config.WebServerLog.Output == "stderr",
 	}
 
 	// Stop timer

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/ntt360/gin/core/gvalue"
+	"github.com/ntt360/gin/internal/tty"
 	"io"
 )
 
@@ -69,14 +70,23 @@ var defaultLogFormatter = func(param GinxLogFormatterParams) string {
 		encodeData, _ := json.Marshal(data)
 		return string(encodeData) + "\n"
 	default:
-		return fmt.Sprintf("[%s]\t\"%s\"\t%s\t%s\t%s\t%s\t%d\t%d\t\"%s\"\t%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
-			param.ClientIP,
+		var statusColor, methodColor, resetColor, logIDColor, ipColor string
+		if param.IsOutputColor() {
+			statusColor = param.StatusCodeColor()
+			methodColor = param.MethodColor()
+			resetColor = param.ResetColor()
+			logIDColor = tty.Green
+			ipColor = tty.Magenta
+		}
+
+		return fmt.Sprintf("[%s%s%s]\t\"%s\"\t%s%s%s\t%s%s%s\t%s\t%s\t%s %d %s\t%d\t\"%s\"\t%d\t%s\t%s\t%s\t%s\t%s\t%s%s%s\t%s\n",
+			ipColor, param.ClientIP, resetColor,
 			param.TimeStamp.Format(gvalue.TimeRFC3339Milli),
-			logID,
-			param.Method,
+			logIDColor, logID, resetColor,
+			methodColor, param.Method, resetColor,
 			param.Request.URL.Path,
 			q,
-			param.StatusCode,
+			statusColor, param.StatusCode, resetColor,
 			param.BodySize,
 			ua,
 			param.Latency.Milliseconds(),
@@ -85,7 +95,7 @@ var defaultLogFormatter = func(param GinxLogFormatterParams) string {
 			param.Env,
 			idc,
 			param.PrjName,
-			param.LocalIP,
+			ipColor, param.LocalIP, resetColor,
 			param.Hostname,
 		)
 	}

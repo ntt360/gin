@@ -6,6 +6,7 @@ package gin
 
 import (
 	"fmt"
+	"github.com/ntt360/gin/internal/tty"
 	"io"
 	"net/http"
 	"os"
@@ -20,17 +21,6 @@ const (
 	autoColor consoleColorModeValue = iota
 	disableColor
 	forceColor
-)
-
-const (
-	green   = "\033[97;42m"
-	white   = "\033[90;47m"
-	yellow  = "\033[90;43m"
-	red     = "\033[97;41m"
-	blue    = "\033[97;44m"
-	magenta = "\033[97;45m"
-	cyan    = "\033[97;46m"
-	reset   = "\033[0m"
 )
 
 var consoleColorMode = autoColor
@@ -70,8 +60,8 @@ type LogFormatterParams struct {
 	Path string
 	// ErrorMessage is set if error has occurred in processing the request.
 	ErrorMessage string
-	// isTerm shows whether gin's output descriptor refers to a terminal.
-	isTerm bool
+	// IsTerm shows whether gin's output descriptor refers to a terminal.
+	IsTerm bool
 	// BodySize is the size of the Response Body
 	BodySize int
 	// Keys are the keys set on the request's context.
@@ -84,13 +74,13 @@ func (p *LogFormatterParams) StatusCodeColor() string {
 
 	switch {
 	case code >= http.StatusOK && code < http.StatusMultipleChoices:
-		return green
+		return tty.Green
 	case code >= http.StatusMultipleChoices && code < http.StatusBadRequest:
-		return white
+		return tty.White
 	case code >= http.StatusBadRequest && code < http.StatusInternalServerError:
-		return yellow
+		return tty.Yellow
 	default:
-		return red
+		return tty.Red
 	}
 }
 
@@ -100,32 +90,32 @@ func (p *LogFormatterParams) MethodColor() string {
 
 	switch method {
 	case http.MethodGet:
-		return blue
+		return tty.Blue
 	case http.MethodPost:
-		return cyan
+		return tty.Cyan
 	case http.MethodPut:
-		return yellow
+		return tty.Yellow
 	case http.MethodDelete:
-		return red
+		return tty.Red
 	case http.MethodPatch:
-		return green
+		return tty.Green
 	case http.MethodHead:
-		return magenta
+		return tty.Magenta
 	case http.MethodOptions:
-		return white
+		return tty.White
 	default:
-		return reset
+		return tty.Reset
 	}
 }
 
 // ResetColor resets all escape attributes.
 func (p *LogFormatterParams) ResetColor() string {
-	return reset
+	return tty.Reset
 }
 
 // IsOutputColor indicates whether can colors be outputted to the log.
 func (p *LogFormatterParams) IsOutputColor() bool {
-	return consoleColorMode == forceColor || (consoleColorMode == autoColor && p.isTerm)
+	return consoleColorMode == forceColor || (consoleColorMode == autoColor && p.IsTerm)
 }
 
 // defaultLogFormatter is the default log format function Logger middleware uses.
@@ -243,7 +233,7 @@ func LoggerWithConfig(conf LoggerConfig) HandlerFunc {
 		if _, ok := skip[path]; !ok {
 			param := LogFormatterParams{
 				Request: c.Request,
-				isTerm:  isTerm,
+				IsTerm:  isTerm,
 				Keys:    c.Keys,
 			}
 

@@ -41,6 +41,19 @@ type errorMsgs []*Error
 
 var _ error = (*Error)(nil)
 
+// override the error stack total
+var errStackNum = 1
+
+func SetErrStackNum(num int) {
+	if num > 0 {
+		errStackNum = num
+	}
+}
+
+func ErrStackNum() int{
+	return errStackNum
+}
+
 // SetType sets the error's type.
 func (msg *Error) SetType(flags ErrorType) *Error {
 	msg.Type = flags

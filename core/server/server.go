@@ -3,12 +3,18 @@ package server
 import (
 	"fmt"
 	"github.com/ntt360/gin/core/config"
+	"github.com/ntt360/gin/core/gvalue"
 	"micro-go-http-tpl/app"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/logrusorgru/aurora"
+)
+
+const (
+	ipAll       = "0.0.0.0"
+	paddingWith = 16
 )
 
 type Server struct {
@@ -30,7 +36,7 @@ func RegisterTaskRunner(task TaskRunner) {
 		// 注册task任务，需要配置 app.Config.yaml task[enable] = true
 		if s.config.Task.Enable {
 			s.wg.Add(1)
-			s.ls = append(s.ls, fmt.Sprintf(" - Task Jobs: %s\n", aurora.Bold(aurora.Green("Running"))))
+			s.ls = append(s.ls, fmt.Sprintf(" - [%s] %s\n", centerPad("Task Jobs", 16), aurora.Bold(aurora.Green("Running"))))
 			go func() {
 				task.Runner(&s.wg)
 			}()
@@ -45,7 +51,8 @@ func RegisterGrpcRunner(runner GrpcRunner) {
 		// grpc server
 		if s.config.Grpc.Enable {
 			s.wg.Add(1)
-			s.ls = append(s.ls, fmt.Sprintf(" - Grpc  Server: %s\n", aurora.Bold(aurora.Cyan("tcp://"+s.config.Grpc.Listen))))
+			local, remote := getAddr(s.config.Grpc.Listen, "tcp://", aurora.GreenFg)
+			s.ls = append(s.ls, fmt.Sprintf(" - [%s] Local: %-24s Network: %s\n", centerPad("Grpc Server", paddingWith), local, remote))
 			s.grpc = runner
 
 			go func() {
@@ -62,7 +69,8 @@ func RegisterHttpRunner(runner HttpRunner) {
 	r := func(s *Server) {
 		if s.config.HTTP.Enable {
 			s.wg.Add(1)
-			s.ls = append(s.ls, fmt.Sprintf(" - HTTP  Server: %s\n", aurora.Bold(aurora.Cyan("http://"+s.config.HTTP.Listen))))
+			local, remote := getAddr(s.config.HTTP.Listen, "http://", aurora.CyanFg)
+			s.ls = append(s.ls, fmt.Sprintf(" - [%s] Local: %-24s Network: %s\n", centerPad("HTTP  Server", paddingWith), local, remote))
 			s.http = runner
 
 			go func() {
@@ -75,11 +83,37 @@ func RegisterHttpRunner(runner HttpRunner) {
 	runners = append(runners, r)
 }
 
+func getAddr(addr string, prefix string, color aurora.Color) (aurora.Value, aurora.Value) {
+	var localIP, remoteIP string
+	if strings.Contains(addr, ipAll) {
+		localIP = strings.Replace(addr, ipAll, "127.0.0.1", -1)
+		remoteIP = strings.Replace(addr, ipAll, gvalue.LocalIP(), -1)
+	}
+
+	var local, remote aurora.Value
+	if color == aurora.YellowFg {
+		local = aurora.Bold(aurora.Yellow(prefix + localIP))
+		remote = aurora.Bold(aurora.Yellow(prefix + remoteIP))
+	} else if color == aurora.GreenFg {
+		local = aurora.Bold(aurora.Green(prefix + localIP))
+		remote = aurora.Bold(aurora.Green(prefix + remoteIP))
+	} else if color == aurora.CyanFg {
+		local = aurora.Bold(aurora.Cyan(prefix + localIP))
+		remote = aurora.Bold(aurora.Cyan(prefix + remoteIP))
+	} else {
+		local = aurora.Bold(prefix + localIP)
+		remote = aurora.Bold(prefix + remoteIP)
+	}
+
+	return local, remote
+}
+
 func RegisterHttpsRunner(runner HttpRunner) {
 	r := func(s *Server) {
 		if s.config.HTTPS.Enable {
 			s.wg.Add(1)
-			s.ls = append(s.ls, fmt.Sprintf(" - HTTPS Server: %s\n", aurora.Bold(aurora.Cyan("https://"+s.config.HTTPS.Listen))))
+			local, remote := getAddr(s.config.HTTPS.Listen, "https://", aurora.CyanFg)
+			s.ls = append(s.ls, fmt.Sprintf(" - [%s] Local: %-24s Network: %s\n", centerPad("HTTPS Server", paddingWith), local, remote))
 			s.https = runner
 
 			go func() {
@@ -118,7 +152,8 @@ func Run(config *config.Model) {
 		}
 
 		addr := fmt.Sprintf("0.0.0.0:%d", p)
-		s.ls = append(s.ls, fmt.Sprintf(" - PProf Server: %s\n", aurora.Bold(aurora.Cyan("http://"+addr))))
+		local, remote := getAddr(addr, "http://", aurora.WhiteFg)
+		s.ls = append(s.ls, fmt.Sprintf(" - [%s] Local: %-24s Network: %s\n", centerPad("PProf Server", 16), local, remote))
 
 		go func() {
 			defer s.wg.Done()
@@ -134,7 +169,8 @@ func Run(config *config.Model) {
 			p = app.Config.Metrics.Port
 		}
 		addr := fmt.Sprintf("0.0.0.0:%d", p)
-		s.ls = append(s.ls, fmt.Sprintf(" - metrics Server: %s\n", aurora.Bold(aurora.Cyan("http://"+addr))))
+		local, remote := getAddr(addr, "http://", aurora.WhiteFg)
+		s.ls = append(s.ls, fmt.Sprintf(" - [ %s ] Local: %-24s Network: %s\n", centerPad("Metrics Server", 14), local, remote))
 		go func() {
 			defer s.wg.Done()
 			metrics(addr)
@@ -143,4 +179,8 @@ func Run(config *config.Model) {
 
 	// server will hang up
 	s.wg.Wait()
+}
+
+func centerPad(title string, w int) string {
+	return fmt.Sprintf("%*s", -w, fmt.Sprintf("%*s", (w+len(title))/2, title))
 }

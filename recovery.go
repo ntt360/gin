@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/ntt360/gin/internal/tty"
 	"io"
 	"io/ioutil"
 	"log"
@@ -80,13 +81,13 @@ func CustomRecoveryWithWriter(out io.Writer, handle RecoveryFunc) HandlerFunc {
 					}
 					headersToStr := strings.Join(headers, "\r\n")
 					if brokenPipe {
-						logger.Printf("%s\n%s%s", err, headersToStr, reset)
+						logger.Printf("%s\n%s%s", err, headersToStr, tty.Reset)
 					} else if IsDebugging() {
 						logger.Printf("[Recovery] %s panic recovered:\n%s\n%s\n%s%s",
-							timeFormat(time.Now()), headersToStr, err, stack, reset)
+							timeFormat(time.Now()), headersToStr, err, stack, tty.Reset)
 					} else {
 						logger.Printf("[Recovery] %s panic recovered:\n%s\n%s%s",
-							timeFormat(time.Now()), err, stack, reset)
+							timeFormat(time.Now()), err, stack, tty.Reset)
 					}
 				}
 				if brokenPipe {
