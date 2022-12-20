@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/ntt360/gin/core/config"
 	"github.com/ntt360/gin/core/gvalue"
-	"micro-go-http-tpl/app"
 	"strings"
 	"sync"
 	"time"
@@ -166,14 +165,14 @@ func Run(config *config.Model) {
 		s.wg.Add(1)
 		p := 6061
 		if s.config.Metrics.Port > 0 {
-			p = app.Config.Metrics.Port
+			p = s.config.Metrics.Port
 		}
 		addr := fmt.Sprintf("0.0.0.0:%d", p)
 		local, remote := getAddr(addr, "http://", aurora.WhiteFg)
 		s.ls = append(s.ls, fmt.Sprintf(" - [ %s ] Local: %-24s Network: %s\n", centerPad("Metrics Server", 14), local, remote))
 		go func() {
 			defer s.wg.Done()
-			metrics(addr)
+			metrics(s.config.Metrics.DefaultPath(), addr)
 		}()
 	}
 

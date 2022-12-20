@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/ntt360/gin/core/config"
 	"github.com/ntt360/gin/core/gvalue"
-	"micro-go-http-tpl/app"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -14,12 +13,16 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ntt360/gin"
 
 	"github.com/ntt360/gin/utils/uniqid"
 )
+
+// locker app global locker.
+var locker sync.RWMutex
 
 // Logger app web server log instance.
 // joinLines: 是否设置为上报数据到qbus队列
@@ -110,9 +113,9 @@ func loadLogWriter(config *config.Model) error {
 		return err
 	}
 
-	app.Locker.Lock()
+	locker.Lock()
 	logOut = appLog
-	app.Locker.Unlock()
+	locker.Unlock()
 
 	return nil
 }
