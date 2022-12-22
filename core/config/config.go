@@ -135,7 +135,7 @@ func processOne(fEnvVal string, envKeyExist bool, vItem reflect.Value) {
 }
 
 // GetHTTPSCertFile get project https cert file content.
-func (m Model) GetHTTPSCertFile() string {
+func (m *Model) GetHTTPSCertFile() string {
 	if path.IsAbs(m.HTTPS.CertFile) {
 		return m.HTTPS.CertFile
 	}
@@ -144,7 +144,7 @@ func (m Model) GetHTTPSCertFile() string {
 }
 
 // GetHTTPSKeyFile get https cert key file content.
-func (m Model) GetHTTPSKeyFile() string {
+func (m *Model) GetHTTPSKeyFile() string {
 	if path.IsAbs(m.HTTPS.CertKey) {
 		return m.HTTPS.CertKey
 	}
