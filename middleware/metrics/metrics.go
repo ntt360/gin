@@ -1,10 +1,11 @@
 package metrics
 
 import (
+	"sync"
+
 	"github.com/ntt360/gin"
 	"github.com/ntt360/gin/core/config"
 	"github.com/prometheus/client_golang/prometheus"
-	"sync"
 
 	"strconv"
 )
@@ -17,7 +18,7 @@ type Prometheus struct {
 	defaultPath  string
 }
 
-func NewPrometheus(config *config.Model) *Prometheus {
+func NewPrometheus(config *config.Base) *Prometheus {
 	pOnce.Do(func() {
 		requestTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
 			Name:        "request_total",

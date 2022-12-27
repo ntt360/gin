@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/ntt360/gin/core/config"
-	"github.com/ntt360/gin/core/gvalue"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -15,6 +13,9 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ntt360/gin/core/config"
+	"github.com/ntt360/gin/core/gvalue"
 
 	"github.com/ntt360/gin"
 
@@ -26,7 +27,7 @@ var locker sync.RWMutex
 
 // Logger app web server log instance.
 // joinLines: 是否设置为上报数据到qbus队列
-func Logger(config *config.Model) gin.HandlerFunc {
+func Logger(config *config.Base) gin.HandlerFunc {
 	conf := GinxLoggerrConfig{
 		Formatter: defaultLogFormatter,
 		SkipPaths: config.WebServerLog.SkipPaths,
@@ -92,7 +93,7 @@ func Logger(config *config.Model) gin.HandlerFunc {
 	}
 }
 
-func getLogDir(config *config.Model) string {
+func getLogDir(config *config.Base) string {
 	logDir := strings.TrimRight(config.WebServerLog.Dir, "/")
 	if !path.IsAbs(logDir) {
 		logDir = strings.TrimRight(config.HomeDir, "/") + "/" + logDir
@@ -101,12 +102,12 @@ func getLogDir(config *config.Model) string {
 	return logDir
 }
 
-func getLogBaseFileName(config *config.Model) string {
+func getLogBaseFileName(config *config.Base) string {
 	return getLogDir(config) + "/" + strings.TrimLeft(config.WebServerLog.Name, "/")
 }
 
 // 加载Log配置
-func loadLogWriter(config *config.Model) error {
+func loadLogWriter(config *config.Base) error {
 	appLogName := getLogBaseFileName(config)
 	appLog, err := os.OpenFile(appLogName, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {
@@ -120,7 +121,7 @@ func loadLogWriter(config *config.Model) error {
 	return nil
 }
 
-func initLogWriter(config *config.Model) error {
+func initLogWriter(config *config.Base) error {
 	switch config.WebServerLog.Output {
 	case "file":
 		err := loadLogWriter(config)
@@ -136,7 +137,7 @@ func initLogWriter(config *config.Model) error {
 	return nil
 }
 
-func panicCatch(c *gin.Context, config *config.Model, start time.Time, raw string, path string, formatter LogFormatter) {
+func panicCatch(c *gin.Context, config *config.Base, start time.Time, raw string, path string, formatter LogFormatter) {
 	if err := recover(); err != nil {
 		var brokenPipe bool
 		if ne, ok := err.(*net.OpError); ok {
@@ -178,7 +179,7 @@ func panicCatch(c *gin.Context, config *config.Model, start time.Time, raw strin
 	}
 }
 
-func writeData(c *gin.Context, config *config.Model, start time.Time, raw string, path string, formatter LogFormatter, errMsg string) {
+func writeData(c *gin.Context, config *config.Base, start time.Time, raw string, path string, formatter LogFormatter, errMsg string) {
 	param := gin.LogFormatterParams{
 		Request: c.Request,
 		Keys:    c.Keys,

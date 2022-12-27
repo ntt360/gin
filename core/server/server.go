@@ -18,7 +18,7 @@ const (
 )
 
 type Server struct {
-	config *config.Model
+	config *config.Base
 	wg     sync.WaitGroup
 	ls     []string
 
@@ -127,7 +127,7 @@ func RegisterHttpsRunner(runner HttpRunner) {
 }
 
 // Run init all server
-func Run(config *config.Model) {
+func Run(config *config.Base) {
 	s := &Server{
 		config: config,
 		wg:     sync.WaitGroup{},

@@ -16,8 +16,8 @@ const (
 	Dev   = "dev"   // 开发
 )
 
-// Model app global config model.
-type Model struct {
+// Base app global config model.
+type Base struct {
 	Env               string           `yaml:"env" env:"GINX_ENV"`
 	LocalIP           string           `yaml:"-"`
 	Hostname          string           `yaml:"-"`
@@ -45,7 +45,7 @@ type Model struct {
 }
 
 // MergeEnv merge yaml config and linux env same var.
-func (m *Model) MergeEnv() {
+func (m *Base) MergeEnv() {
 	assign(reflect.ValueOf(m))
 }
 
@@ -100,7 +100,7 @@ func processOne(fEnvVal string, envKeyExist bool, vItem reflect.Value) {
 }
 
 // GetHTTPSCertFile get project https cert file content.
-func (m *Model) GetHTTPSCertFile() string {
+func (m *Base) GetHTTPSCertFile() string {
 	if path.IsAbs(m.HTTPS.CertFile) {
 		return m.HTTPS.CertFile
 	}
@@ -109,7 +109,7 @@ func (m *Model) GetHTTPSCertFile() string {
 }
 
 // GetHTTPSKeyFile get https cert key file content.
-func (m *Model) GetHTTPSKeyFile() string {
+func (m *Base) GetHTTPSKeyFile() string {
 	if path.IsAbs(m.HTTPS.CertKey) {
 		return m.HTTPS.CertKey
 	}

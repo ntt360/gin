@@ -2,16 +2,17 @@ package tracer
 
 import (
 	"context"
+	"os"
+
 	"github.com/ntt360/gin"
 	"github.com/ntt360/gin/core/config"
 	"github.com/ntt360/gin/core/gvalue"
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/uber/jaeger-client-go"
-	"os"
 )
 
-func Inject(appConf *config.Model) gin.HandlerFunc {
+func Inject(appConf *config.Base) gin.HandlerFunc {
 	var filterPaths = make(map[string]struct{})
 	for _, val := range appConf.Trace.SkipPaths {
 		filterPaths[val] = struct{}{}

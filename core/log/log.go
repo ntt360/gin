@@ -12,7 +12,7 @@ import (
 )
 
 // NewLog app web new log.
-func NewLog(logName string, conf *config.Model) (*logrus.Entry, error) {
+func NewLog(logName string, conf *config.Base) (*logrus.Entry, error) {
 	logger := logrus.New()
 
 	// 日志输出级别
@@ -37,7 +37,7 @@ func NewLog(logName string, conf *config.Model) (*logrus.Entry, error) {
 	}), nil
 }
 
-func initLogLevel(conf *config.Model, logger *logrus.Logger) {
+func initLogLevel(conf *config.Base, logger *logrus.Logger) {
 	var level logrus.Level
 	switch conf.Log.Level {
 	case "debug":
@@ -56,7 +56,7 @@ func initLogLevel(conf *config.Model, logger *logrus.Logger) {
 	logger.SetLevel(level)
 }
 
-func initLogFormat(conf *config.Model, logger *logrus.Logger) {
+func initLogFormat(conf *config.Base, logger *logrus.Logger) {
 	switch conf.Log.Format {
 	case "json":
 		logger.SetFormatter(&logrus.JSONFormatter{
@@ -74,7 +74,7 @@ func initLogFormat(conf *config.Model, logger *logrus.Logger) {
 	}
 }
 
-func getLogFile(logName string, conf *config.Model) string {
+func getLogFile(logName string, conf *config.Base) string {
 	logPath := ""
 	if path.IsAbs(logName) {
 		logPath = logName
@@ -85,7 +85,7 @@ func getLogFile(logName string, conf *config.Model) string {
 	return logPath
 }
 
-func initLogOutput(logName string, conf *config.Model, logger *logrus.Logger) error {
+func initLogOutput(logName string, conf *config.Base, logger *logrus.Logger) error {
 	// if log file name no ext, add default one
 	logExt := filepath.Ext(logName)
 	if len(logExt) <= 0 {
@@ -112,7 +112,7 @@ func initLogOutput(logName string, conf *config.Model, logger *logrus.Logger) er
 	return nil
 }
 
-func initFileWriter(logName string, conf *config.Model) (*os.File, error) {
+func initFileWriter(logName string, conf *config.Base) (*os.File, error) {
 	logF, err := os.OpenFile(getLogFile(logName, conf), os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, err

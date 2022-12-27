@@ -44,7 +44,7 @@ const (
 	defCharset      = "utf8mb4"
 )
 
-func WriteDB(appConf *config.Model) *gorm.DB {
+func WriteDB(appConf *config.Base) *gorm.DB {
 	if dbWClient != nil {
 		return dbWClient
 	}
@@ -57,7 +57,7 @@ func WriteDB(appConf *config.Model) *gorm.DB {
 	return c.(*gorm.DB)
 }
 
-func ReadDB(appConf *config.Model) *gorm.DB {
+func ReadDB(appConf *config.Base) *gorm.DB {
 	if dbRClient != nil {
 		return dbRClient
 	}
@@ -69,7 +69,7 @@ func ReadDB(appConf *config.Model) *gorm.DB {
 	return c.(*gorm.DB)
 }
 
-func initDB(isWriteDb bool, conf *config.Model) *gorm.DB {
+func initDB(isWriteDb bool, conf *config.Base) *gorm.DB {
 	dbConf := getBaseConfig(isWriteDb, conf)
 	gormConf := &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -144,7 +144,7 @@ func BaggageCtx(ctx *gin.Context) context.Context {
 	})
 }
 
-func getBaseConfig(isWriteDb bool, conf *config.Model) sql.Config {
+func getBaseConfig(isWriteDb bool, conf *config.Base) sql.Config {
 	// default use read config
 	addr := conf.Mysql.Read.Host + ":" + conf.Mysql.Read.Port
 	username := conf.Mysql.Read.Username

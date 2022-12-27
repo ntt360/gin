@@ -9,7 +9,7 @@ import (
 	"github.com/uber/jaeger-lib/metrics"
 )
 
-func Init(appConf *config.Model) error {
+func Init(appConf *config.Base) error {
 	conf, err := jaegercfg.FromEnv()
 	if err != nil {
 		return err

@@ -6,7 +6,7 @@ import (
 )
 
 // Init es instance.
-func Init(conf *config.Model) *elasticsearch.Client {
+func Init(conf *config.Base) *elasticsearch.Client {
 	esConfig := elasticsearch.Config{
 		Addresses: []string{
 			conf.Elastic.Server,

@@ -9,7 +9,7 @@ import (
 )
 
 // Init redis instance.
-func Init(isWrite bool, conf *config.Model) *redis.Client {
+func Init(isWrite bool, conf *config.Base) *redis.Client {
 	var rdsConf *redis.Options
 	if isWrite {
 		rdsConf = &redis.Options{

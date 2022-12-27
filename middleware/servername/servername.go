@@ -1,14 +1,15 @@
 package servername
 
 import (
+	"net"
+	"strings"
+
 	"github.com/ntt360/gin"
 	"github.com/ntt360/gin/core/config"
 	"github.com/ntt360/gin/utils/array"
-	"net"
-	"strings"
 )
 
-func ServerName(config *config.Model) gin.HandlerFunc {
+func ServerName(config *config.Base) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var host string
 		var err error
