@@ -1,9 +1,9 @@
 package redis
 
 import (
-	"github.com/go-redis/redis/v8"
 	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/ntt360/gin/core/config"
 	"github.com/ntt360/gin/core/redis/jaeger"
 )

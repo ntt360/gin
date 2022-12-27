@@ -2,11 +2,12 @@ package server
 
 import (
 	"fmt"
-	"github.com/ntt360/gin/core/config"
-	"github.com/ntt360/gin/core/gvalue"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/ntt360/gin/core/config"
+	"github.com/ntt360/gin/core/gvalue"
 
 	"github.com/logrusorgru/aurora"
 )

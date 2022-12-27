@@ -1,17 +1,12 @@
 package opentrace
 
 import (
-	"io"
 	"log"
 
 	"github.com/ntt360/gin/core/config"
 	jaegercfg "github.com/uber/jaeger-client-go/config"
 	jaegerlog "github.com/uber/jaeger-client-go/log"
 	"github.com/uber/jaeger-lib/metrics"
-)
-
-var (
-	TracerCloser io.Closer
 )
 
 func Init(appConf *config.Model) error {
@@ -36,7 +31,7 @@ func Init(appConf *config.Model) error {
 	}
 
 	// Initialize tracer with a logger and a metrics factory
-	closer, err := conf.InitGlobalTracer(
+	_, err = conf.InitGlobalTracer(
 		appConf.Name,
 		jaegercfg.Logger(jaegerlog.NullLogger),
 		jaegercfg.Metrics(metrics.NullFactory),
@@ -46,7 +41,6 @@ func Init(appConf *config.Model) error {
 	if err != nil {
 		return err
 	}
-	TracerCloser = closer
 
 	return nil
 }

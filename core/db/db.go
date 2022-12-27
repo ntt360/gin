@@ -3,6 +3,11 @@ package db
 import (
 	"context"
 	"fmt"
+	"log"
+	"net"
+	"os"
+	"time"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/ntt360/gin"
 	"golang.org/x/crypto/ssh"
@@ -10,10 +15,6 @@ import (
 	sql "gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"log"
-	"net"
-	"os"
-	"time"
 
 	"github.com/ntt360/gin/core/config"
 	"github.com/ntt360/gin/core/db/gormlogger"

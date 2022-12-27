@@ -2,12 +2,13 @@ package log
 
 import (
 	"errors"
-	"github.com/ntt360/gin/core/config"
-	"github.com/ntt360/gin/core/gvalue"
-	"github.com/sirupsen/logrus"
 	"os"
 	"path"
 	"path/filepath"
+
+	"github.com/ntt360/gin/core/config"
+	"github.com/ntt360/gin/core/gvalue"
+	"github.com/sirupsen/logrus"
 )
 
 // NewLog app web new log.
