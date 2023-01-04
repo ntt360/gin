@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"strings"
@@ -45,7 +46,7 @@ func RegisterTaskRunner(task TaskRunner) {
 				sig := make(chan os.Signal, 1)
 				signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
 				for range sig {
-					fmt.Printf("[pid %d] task has been stopped\n", os.Getpid())
+					log.Printf("[pid %d] task has been stopped\n", os.Getpid())
 					s.wg.Done()
 				}
 			}()
