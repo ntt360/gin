@@ -2,8 +2,11 @@ package server
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/ntt360/gin/core/config"
@@ -37,6 +40,16 @@ func RegisterTaskRunner(task TaskRunner) {
 		if s.config.Task.Enable {
 			s.wg.Add(1)
 			s.ls = append(s.ls, fmt.Sprintf(" - [%s] %s\n", centerPad("Task Jobs", 16), aurora.Bold(aurora.Green("Running"))))
+
+			go func() {
+				sig := make(chan os.Signal, 1)
+				signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
+				for range sig {
+					fmt.Printf("[pid %d] task has been stopped\n", os.Getpid())
+					s.wg.Done()
+				}
+			}()
+
 			go func() {
 				task.Runner(&s.wg)
 			}()
