@@ -3,7 +3,6 @@ package uniqid
 import (
 	"math"
 	"math/rand"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -14,7 +13,7 @@ import (
 
 var (
 	snow     *snowflake.Node
-	snowNode = os.Getpid() % 1024
+	snowNode = time.Now().Nanosecond() / 1e3 % 1021
 	snowOnce sync.Once
 )
 
