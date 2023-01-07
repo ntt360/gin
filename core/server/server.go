@@ -2,12 +2,8 @@ package server
 
 import (
 	"fmt"
-	"log"
-	"os"
-	"os/signal"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/ntt360/gin/core/config"
@@ -41,15 +37,6 @@ func RegisterTaskRunner(task TaskRunner) {
 		if s.config.Task.Enable {
 			s.wg.Add(1)
 			s.ls = append(s.ls, fmt.Sprintf(" - [%s] %s\n", centerPad("Task Jobs", 16), aurora.Bold(aurora.Green("Running"))))
-
-			go func() {
-				sig := make(chan os.Signal, 1)
-				signal.Notify(sig, syscall.SIGTERM, syscall.SIGINT)
-				for range sig {
-					log.Printf("[pid %d] task has been stopped\n", os.Getpid())
-					s.wg.Done()
-				}
-			}()
 
 			go func() {
 				task.Runner(&s.wg)
@@ -99,10 +86,15 @@ func RegisterHttpRunner(runner HttpRunner) {
 
 func getAddr(addr string, prefix string, color aurora.Color) (aurora.Value, aurora.Value) {
 	var localIP, remoteIP string
-	if strings.Contains(addr, ipAll) {
-		localIP = strings.Replace(addr, ipAll, "127.0.0.1", -1)
-		remoteIP = strings.Replace(addr, ipAll, gvalue.LocalIP(), -1)
+	if !strings.Contains(addr, ipAll) {
+		local := aurora.Bold(aurora.Yellow(prefix + addr))
+		remote := aurora.Bold(aurora.Yellow(prefix + addr))
+
+		return local, remote
 	}
+
+	localIP = strings.Replace(addr, ipAll, "127.0.0.1", -1)
+	remoteIP = strings.Replace(addr, ipAll, gvalue.LocalIP(), -1)
 
 	var local, remote aurora.Value
 	if color == aurora.YellowFg {
