@@ -2,11 +2,12 @@ package form
 
 import (
 	"fmt"
-	"github.com/ntt360/gin/internal/valid/rule"
 	"mime/multipart"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/ntt360/gin/internal/valid/rule"
 )
 
 func Validate(data any, m any, validTagName string) error {
@@ -36,7 +37,7 @@ func Validate(data any, m any, validTagName string) error {
 	}
 
 	// recurse valid
-	err := recursiveValid(val, f)
+	_, err := recursiveValid(val, f)
 	if err != nil {
 		return err
 	}
@@ -45,7 +46,7 @@ func Validate(data any, m any, validTagName string) error {
 }
 
 // recurse valid
-func recursiveValid(val reflect.Value, field *Field) error {
+func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 	// current elem type
 	t := val.Type().Kind()
 	var err error
@@ -62,13 +63,13 @@ func recursiveValid(val reflect.Value, field *Field) error {
 		if !field.disableValid {
 			_, err = valid(field)
 			if err != nil {
-				return err
+				return false, err
 			}
 		}
 
 		err = trySetVal(val, field)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 	case reflect.Slice, reflect.Array:
@@ -76,7 +77,7 @@ func recursiveValid(val reflect.Value, field *Field) error {
 		// valid array self
 		deepValid, err = valid(field)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		l := field.Len()
@@ -94,9 +95,9 @@ func recursiveValid(val reflect.Value, field *Field) error {
 			field.CurTag = ""
 			field.disableValid = !deepValid
 
-			err = recursiveValid(el, field)
-			if err != nil {
-				return err
+			unValid, rErr := recursiveValid(el, field)
+			if rErr != nil {
+				return unValid, rErr
 			}
 
 			field.PopTrack()
@@ -119,23 +120,23 @@ func recursiveValid(val reflect.Value, field *Field) error {
 		// valid struct self
 		_, err = valid(field)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		// the time.Time struct no need deep in valid
 		if val.Type().ConvertibleTo(rule.TimeType) {
 			tStr, ok := field.Str()
 			if !ok {
-				return nil
+				return true, nil
 			}
 
 			tVal, e := rule.FieldTimeVal(tStr, field.CurTag)
 			if e != nil {
-				return field.WrapperErr(fmt.Errorf("the param %s not valid", field.CurParam))
+				return false, field.WrapperErr(fmt.Errorf("the param %s not valid", field.CurParam))
 			}
 
 			val.Set(reflect.ValueOf(tVal))
-			return nil
+			return false, nil
 		}
 
 		// multipart files
@@ -153,7 +154,7 @@ func recursiveValid(val reflect.Value, field *Field) error {
 					val.Set(fVal.Elem())
 				}
 			}
-			return nil
+			return false, nil
 		}
 
 		// valid struct per key value
@@ -166,21 +167,23 @@ func recursiveValid(val reflect.Value, field *Field) error {
 				continue
 			}
 
-			field.parent = val.Type()
-			field.selfType = vt.Type
-			field.CurKey = vt.Name
-			field.CurTag = vt.Tag
-			field.CurInheritTag = ""
+			if !vt.Anonymous {
+				field.parent = val.Type()
+				field.selfType = vt.Type
+				field.CurKey = vt.Name
+				field.CurTag = vt.Tag
+				field.CurInheritTag = ""
 
-			d, dOk := rule.DefaultVal(field.CurTag, field.ValidTagName)
-			field.defaultVal = d
-			field.defaultValExist = dOk
-			field.CurParam = rule.Param(field.CurTag, field.ValidTagName)
-			field.PushTrack(field.CurParam)
+				d, dOk := rule.DefaultVal(field.CurTag, field.ValidTagName)
+				field.defaultVal = d
+				field.defaultValExist = dOk
+				field.CurParam = rule.Param(field.CurTag, field.ValidTagName)
+				field.PushTrack(field.CurParam)
+			}
 
-			err = recursiveValid(structElem, field)
-			if err != nil {
-				return err
+			unValid, rErr := recursiveValid(structElem, field)
+			if rErr != nil {
+				return unValid, rErr
 			}
 
 			field.PopTrack()
@@ -190,34 +193,38 @@ func recursiveValid(val reflect.Value, field *Field) error {
 		if !val.Elem().IsValid() { // val child maybe is zero value or pointer value, such as *int
 			v := reflect.New(val.Type().Elem())
 			field.selfType = v.Type()
-			err = recursiveValid(v.Elem(), field)
-			if err != nil {
-				return err
+			unValid, rErr := recursiveValid(v.Elem(), field)
+			if rErr != nil {
+				return unValid, rErr
 			}
 
-			val.Set(v)
+			if !unValid {
+				val.Set(v)
+			}
+
+			return false, nil
 		} else {
 			val = val.Elem()
 		}
 
-		err = recursiveValid(val, field)
-		if err != nil {
-			return err
+		unValid, rErr := recursiveValid(val, field)
+		if rErr != nil {
+			return unValid, rErr
 		}
 	case reflect.Interface: // interface data not valid
 		v, ok := field.data.Value(field.CurDataIndex())
 		if !ok {
 			// TODO default value
-			return nil
+			return false, nil
 		}
 
 		val.Set(v)
-		return nil
+		return false, nil
 	case reflect.Map: // form data not support map type
-		return nil
+		return false, nil
 	}
 
-	return err
+	return false, err
 }
 
 func trySetVal(val reflect.Value, f *Field) (e error) {

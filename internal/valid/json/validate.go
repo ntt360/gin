@@ -2,11 +2,12 @@ package json
 
 import (
 	"fmt"
-	"github.com/ntt360/gin/internal/valid/rule"
-	"github.com/tidwall/gjson"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/ntt360/gin/internal/valid/rule"
+	"github.com/tidwall/gjson"
 )
 
 func Validate(jsonMap gjson.Result, m any, validTagName string) error {
@@ -25,7 +26,7 @@ func Validate(jsonMap gjson.Result, m any, validTagName string) error {
 	}
 
 	// recurse
-	err := recursiveValid(val, vf)
+	_, err := recursiveValid(val, vf)
 	if err != nil {
 		return err
 	}
@@ -34,7 +35,7 @@ func Validate(jsonMap gjson.Result, m any, validTagName string) error {
 }
 
 // recurse valid
-func recursiveValid(val reflect.Value, field *Field) error {
+func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 	// current elem type
 	t := val.Type().Kind()
 	var err error
@@ -51,13 +52,13 @@ func recursiveValid(val reflect.Value, field *Field) error {
 		if !field.disableValid {
 			_, err = valid(field)
 			if err != nil {
-				return err
+				return false, err
 			}
 		}
 
 		err = trySetVal(val, field)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 	case reflect.Map:
@@ -79,7 +80,7 @@ func recursiveValid(val reflect.Value, field *Field) error {
 
 		if deepValid { // valid in-depth
 			if field.inherit.Contains("required") && !field.Exist() {
-				return field.WrapperErr(fmt.Errorf("the param %s data required but data not exist", field.CurParam))
+				return false, field.WrapperErr(fmt.Errorf("the param %s data required but data not exist", field.CurParam))
 			}
 			keysRules, needValidKey = checkValidMap(val, field)
 		}
@@ -99,7 +100,7 @@ func recursiveValid(val reflect.Value, field *Field) error {
 				})
 
 				if err != nil {
-					return err
+					return false, err
 				}
 			}
 
@@ -113,9 +114,9 @@ func recursiveValid(val reflect.Value, field *Field) error {
 			field.self = elemT
 
 			v := reflect.New(elemT)
-			err = recursiveValid(v, field)
-			if err != nil {
-				return err
+			unValid, rErr := recursiveValid(v, field)
+			if rErr != nil {
+				return unValid, err
 			}
 
 			// try set map element value
@@ -137,11 +138,11 @@ func recursiveValid(val reflect.Value, field *Field) error {
 		// valid array self
 		deepValid, err = valid(field)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		if field.Exist() && !field.IsArray() {
-			return field.WrapperErr(fmt.Errorf(" the param %s filed want array but data type not array", field.CurParam))
+			return false, field.WrapperErr(fmt.Errorf(" the param %s filed want array but data type not array", field.CurParam))
 		}
 
 		l := field.Len()
@@ -159,9 +160,9 @@ func recursiveValid(val reflect.Value, field *Field) error {
 			field.CurTag = ""
 			field.disableValid = !deepValid
 
-			err = recursiveValid(el, field)
-			if err != nil {
-				return err
+			unValid, rErr := recursiveValid(el, field)
+			if rErr != nil {
+				return unValid, rErr
 			}
 
 			field.PopTrack()
@@ -184,23 +185,23 @@ func recursiveValid(val reflect.Value, field *Field) error {
 		// valid struct self
 		_, err = valid(field)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		// the time.Time struct not deep valid
 		if val.Type().ConvertibleTo(rule.TimeType) {
 			tStr, ok := field.Str()
 			if !ok {
-				return nil
+				return true, nil
 			}
 
 			tVal, e := rule.FieldTimeVal(tStr, field.CurTag)
 			if e != nil {
-				return field.WrapperErr(fmt.Errorf("the params %s data can not covert to time", field.CurParam))
+				return false, field.WrapperErr(fmt.Errorf("the params %s data can not covert to time", field.CurParam))
 			}
 
 			val.Set(reflect.ValueOf(tVal))
-			return nil
+			return false, nil
 		}
 
 		// valid struct per key value
@@ -213,21 +214,23 @@ func recursiveValid(val reflect.Value, field *Field) error {
 				continue
 			}
 
-			field.parent = val.Type()
-			field.self = vt.Type
-			field.CurKey = vt.Name
-			field.CurTag = vt.Tag
-			field.CurInheritTag = ""
+			if !vt.Anonymous {
+				field.parent = val.Type()
+				field.self = vt.Type
+				field.CurKey = vt.Name
+				field.CurTag = vt.Tag
+				field.CurInheritTag = ""
 
-			d, dOk := rule.DefaultVal(field.CurTag, field.ValidTagName)
-			field.defaultVal = d
-			field.defaultValExist = dOk
-			field.CurParam = rule.Param(field.CurTag, field.ValidTagName)
-			field.PushTrack(field.CurParam)
+				d, dOk := rule.DefaultVal(field.CurTag, field.ValidTagName)
+				field.defaultVal = d
+				field.defaultValExist = dOk
+				field.CurParam = rule.Param(field.CurTag, field.ValidTagName)
+				field.PushTrack(field.CurParam)
+			}
 
-			err = recursiveValid(structElem, field)
+			unValid, rErr := recursiveValid(structElem, field)
 			if err != nil {
-				return err
+				return unValid, rErr
 			}
 
 			field.PopTrack()
@@ -237,31 +240,34 @@ func recursiveValid(val reflect.Value, field *Field) error {
 		if !val.Elem().IsValid() { // val child maybe is zero value or pointer value, such as *int
 			v := reflect.New(val.Type().Elem())
 			field.self = v.Type()
-			err = recursiveValid(v.Elem(), field)
-			if err != nil {
-				return err
+			unValid, rErr := recursiveValid(v.Elem(), field)
+			if rErr != nil {
+				return unValid, err
 			}
 
-			val.Set(v)
+			if !unValid {
+				val.Set(v)
+			}
+			return false, nil
 		} else {
 			val = val.Elem()
 		}
 
-		err = recursiveValid(val, field)
-		if err != nil {
-			return err
+		unValid, rErr := recursiveValid(val, field)
+		if rErr != nil {
+			return unValid, rErr
 		}
 	case reflect.Interface: // interface data not valid
 		valData := field.data.Get(field.CurDataIndex())
 		if !valData.Exists() {
-			return nil
+			return false, nil
 		}
 
 		val.Set(reflect.ValueOf(valData.Value()))
-		return nil
+		return false, nil
 	}
 
-	return err
+	return false, err
 }
 
 func trySetVal(val reflect.Value, f *Field) (e error) {
