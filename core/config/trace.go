@@ -11,6 +11,6 @@ type Trace struct {
 }
 
 type rpc struct {
-	LogReqParams  bool `yaml:"GINX_TRACE_LOG_REQ_PARAMS"`  // allow trace grpc request params
-	LogRspPayload bool `yaml:"GINX_TRACE_LOG_RSP_PAYLOAD"` // allow trace grpc rsp all data
+	LogReqParams  bool `yaml:"log_req_params" env:"GINX_TRACE_LOG_REQ_PARAMS"`  // allow trace grpc request params
+	LogRspPayload bool `yaml:"log_rsp_payload" env:"GINX_TRACE_LOG_RSP_PAYLOAD"` // allow trace grpc rsp all data
 }
