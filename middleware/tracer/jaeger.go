@@ -2,6 +2,7 @@ package tracer
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/ntt360/gin"
@@ -21,8 +22,7 @@ func Inject(appConf *config.Base) gin.HandlerFunc {
 	idc := os.Getenv("SYS_IDC_NAME")
 
 	return func(ctx *gin.Context) {
-		_, ok := filterPaths[ctx.Request.URL.Path]
-		if ok {
+		if _, ok := filterPaths[ctx.Request.URL.Path]; ok {
 			ctx.Next()
 			return
 		}
@@ -34,9 +34,9 @@ func Inject(appConf *config.Base) gin.HandlerFunc {
 
 		var rootSP opentracing.Span
 		if e != nil {
-			rootSP = opentracing.StartSpan(ctx.Request.URL.Path)
+			rootSP = opentracing.StartSpan(fmt.Sprintf("http %s", ctx.Request.URL.Path))
 		} else {
-			rootSP = opentracing.StartSpan(ctx.Request.URL.Path, opentracing.ChildOf(spCtx))
+			rootSP = opentracing.StartSpan(fmt.Sprintf("http %s", ctx.Request.URL.Path), opentracing.ChildOf(spCtx))
 		}
 		defer rootSP.Finish()
 

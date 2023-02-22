@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ntt360/gin/core/opentrace"
 	"strings"
 	"time"
 
@@ -32,7 +33,19 @@ func before(db *gorm.DB) {
 		jctx = context.Background()
 	}
 
-	sp, _ := opentracing.StartSpanFromContext(jctx, "mysql")
+	// ignore no parent span trace
+	if opentracing.SpanFromContext(jctx) == nil {
+		return
+	}
+
+	// check custom operator name
+	operatorName := "mysql"
+	k := jctx.Value(opentrace.KeyAction)
+	if v, yes := k.(string); yes {
+		operatorName = v
+	}
+
+	sp, _ := opentracing.StartSpanFromContext(jctx, fmt.Sprintf("%s", operatorName))
 	ext.DBType.Set(sp, "mysql")
 
 	db.InstanceSet(jaegerTraceKey, bundle{
