@@ -229,7 +229,7 @@ func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 			}
 
 			unValid, rErr := recursiveValid(structElem, field)
-			if err != nil {
+			if rErr != nil {
 				return unValid, rErr
 			}
 
