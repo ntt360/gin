@@ -25,21 +25,20 @@ func (j jsonBinding) Bind(req *http.Request, obj any) error {
 
 		return defGlobalErr
 	}
-	return decodeJSON(req.Body, obj, j.Name())
+
+	bodyData, _ := io.ReadAll(req.Body)
+
+	// rewrite data
+	req.Body = io.NopCloser(bytes.NewBuffer(bodyData))
+
+	return decodeJSON(bodyData, obj, j.Name())
 }
 
 func (j jsonBinding) BindBody(body []byte, obj any) error {
-	return decodeJSON(bytes.NewReader(body), obj, j.Name())
+	return decodeJSON(body, obj, j.Name())
 }
 
-func decodeJSON(r io.Reader, obj any, validTypeName string) error {
-	content, err := io.ReadAll(r)
-	if err != nil {
-		defGlobalErr.Msg = "read request data failed"
-		defGlobalErr.CauseErr = err
-
-		return defGlobalErr
-	}
+func decodeJSON(content []byte, obj any, validTypeName string) error {
 
 	if len(content) > 0 && !j.Valid(content) {
 		defGlobalErr.Msg = "request data is not valid json"
