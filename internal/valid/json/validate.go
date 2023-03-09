@@ -156,8 +156,12 @@ func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 			field.PushTrack(strconv.Itoa(j))
 			field.parent = val.Type()
 			field.self = childTyp
-			field.CurInheritTag = field.CurTag
-			field.CurTag = ""
+			
+			if j == 0 {
+				field.CurInheritTag = field.CurTag
+				field.CurTag = ""
+			}
+
 			field.disableValid = !deepValid
 
 			unValid, rErr := recursiveValid(el, field)
