@@ -149,24 +149,6 @@ func Run(config *config.Base) {
 		fmt.Printf("\n\nApp Is Running At :\n%s\n", strings.Join(s.ls, ""))
 	}()
 
-	// pprof
-	if s.config.PProf.Enable {
-		s.wg.Add(1)
-		p := 6060
-		if s.config.PProf.Port > 0 {
-			p = s.config.PProf.Port
-		}
-
-		addr := fmt.Sprintf("0.0.0.0:%d", p)
-		local, remote := getAddr(addr, "http://", aurora.WhiteFg)
-		s.ls = append(s.ls, fmt.Sprintf(" - [%s] Local: %-24s Network: %s\n", centerPad("PProf Server", 16), local, remote))
-
-		go func() {
-			defer s.wg.Done()
-			s.pprof(addr)
-		}()
-	}
-
 	// metrics
 	if s.config.Metrics.Enable {
 		s.wg.Add(1)

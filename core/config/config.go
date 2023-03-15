@@ -38,7 +38,6 @@ type Base struct {
 	Tpl               tpl              `yaml:"tpl"`
 	Auth              auth             `yaml:"auth"`
 	Trace             Trace            `yaml:"trace"`
-	PProf             pprof            `yaml:"pprof"`
 	Metrics           metrics          `yaml:"metrics"`
 	Cors              cors             `yaml:"cors"`
 	APICallbackRegExp string           `yaml:"api_callback_reg_exp"`
