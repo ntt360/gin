@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"strings"
 	"sync"
 
 	"github.com/ntt360/gin"
@@ -49,7 +50,7 @@ func (p *Prometheus) HandleFunc() gin.HandlerFunc {
 		p.requestTotal.With(prometheus.Labels{
 			"status": status,
 			"method": method,
-			"uri":    uri,
+			"uri":    strings.ToValidUTF8(uri, ""),
 		}).Inc()
 	}
 }
