@@ -12,7 +12,7 @@ import (
 func (s *Server) httpsServer() {
 	server := gracehttp.NewServer(
 		s.config.HTTPS.Listen,
-		s.http.Engine(),
+		s.https.Engine(),
 		time.Second*10,
 		time.Second*10,
 	)
