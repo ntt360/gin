@@ -8,7 +8,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/ntt360/gin/internal/tty"
+	"github.com/ntt360/gin/utils/tty"
 	"io"
 	"io/ioutil"
 	"log"

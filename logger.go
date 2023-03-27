@@ -6,7 +6,7 @@ package gin
 
 import (
 	"fmt"
-	"github.com/ntt360/gin/internal/tty"
+	"github.com/ntt360/gin/utils/tty"
 	"io"
 	"net/http"
 	"os"
