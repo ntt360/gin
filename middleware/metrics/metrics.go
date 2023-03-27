@@ -22,8 +22,11 @@ type Prometheus struct {
 func NewPrometheus(config *config.Base) *Prometheus {
 	pOnce.Do(func() {
 		requestTotal := prometheus.NewCounterVec(prometheus.CounterOpts{
-			Name:        "request_total",
-			ConstLabels: map[string]string{"env": config.Env},
+			Name: "request_total",
+			ConstLabels: map[string]string{
+				"env": config.Env,
+				"idc": config.IdcName,
+			},
 		}, []string{
 			"status", "method", "uri",
 		})
