@@ -54,10 +54,6 @@ func init() {
 	SetMode(mode)
 }
 
-func SetJSONPCallbackRegex(pattern string) {
-	jsonpCallbackRegex = pattern
-}
-
 // SetMode sets gin mode according to input string.
 func SetMode(value string) {
 	if value == "" {
