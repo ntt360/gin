@@ -6,9 +6,7 @@ package gin
 
 import (
 	"errors"
-	"github.com/gin-contrib/sse"
 	"io"
-	"io/ioutil"
 	"log"
 	"math"
 	"mime/multipart"
@@ -21,6 +19,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/gin-contrib/sse"
 
 	"github.com/ntt360/gin/binding"
 	"github.com/ntt360/gin/render"
@@ -250,20 +250,20 @@ func (c *Context) Error(err error) *Error {
 // It also lazy initializes  c.Keys if it was not used previously.
 func (c *Context) Set(key string, value any) {
 	c.mu.Lock()
+	defer c.mu.Unlock()
 	if c.Keys == nil {
 		c.Keys = make(map[string]any)
 	}
 
 	c.Keys[key] = value
-	c.mu.Unlock()
 }
 
 // Get returns the value for the given key, ie: (value, true).
 // If the value does not exist it returns (nil, false)
 func (c *Context) Get(key string) (value any, exists bool) {
 	c.mu.RLock()
+	defer c.mu.RUnlock()
 	value, exists = c.Keys[key]
-	c.mu.RUnlock()
 	return
 }
 
@@ -388,7 +388,9 @@ func (c *Context) GetStringMapStringSlice(key string) (smss map[string][]string)
 //
 //	router.GET("/user/:id", func(c *gin.Context) {
 //	    // a GET request to /user/john
-//	    id := c.Param("id") // id == "john"
+//	    id := c.Param("id") // id == "/john"
+//	    // a GET request to /user/john/
+//	    id := c.Param("id") // id == "/john/"
 //	})
 func (c *Context) Param(key string) string {
 	return c.Params.ByName(key)
@@ -559,7 +561,7 @@ func (c *Context) GetPostFormMap(key string) (map[string]string, bool) {
 	return c.get(c.formCache, key)
 }
 
-// get is an internal method and returns a map which satisfy conditions.
+// get is an internal method and returns a map which satisfies conditions.
 func (c *Context) get(m map[string][]string, key string) (map[string]string, bool) {
 	dicts := make(map[string]string)
 	exist := false
@@ -652,7 +654,7 @@ func (c *Context) BindYAML(obj any) error {
 }
 
 // BindTOML is a shortcut for c.MustBindWith(obj, binding.TOML).
-func (c *Context) BindTOML(obj interface{}) error {
+func (c *Context) BindTOML(obj any) error {
 	return c.MustBindWith(obj, binding.TOML)
 }
 
@@ -717,7 +719,7 @@ func (c *Context) ShouldBindYAML(obj any) error {
 }
 
 // ShouldBindTOML is a shortcut for c.ShouldBindWith(obj, binding.TOML).
-func (c *Context) ShouldBindTOML(obj interface{}) error {
+func (c *Context) ShouldBindTOML(obj any) error {
 	return c.ShouldBindWith(obj, binding.TOML)
 }
 
@@ -754,7 +756,7 @@ func (c *Context) ShouldBindBodyWith(obj any, bb binding.BindingBody) (err error
 		}
 	}
 	if body == nil {
-		body, err = ioutil.ReadAll(c.Request.Body)
+		body, err = io.ReadAll(c.Request.Body)
 		if err != nil {
 			return err
 		}
@@ -873,7 +875,7 @@ func (c *Context) GetHeader(key string) string {
 
 // GetRawData returns stream data.
 func (c *Context) GetRawData() ([]byte, error) {
-	return ioutil.ReadAll(c.Request.Body)
+	return io.ReadAll(c.Request.Body)
 }
 
 // SetSameSite with cookie
@@ -924,7 +926,9 @@ func (c *Context) Render(code int, r render.Render) {
 	}
 
 	if err := r.Render(c.Writer); err != nil {
-		panic(err)
+		// Pushing error to c.Errors
+		_ = c.Error(err)
+		c.Abort()
 	}
 }
 
@@ -999,7 +1003,7 @@ func (c *Context) YAML(code int, obj any) {
 }
 
 // TOML serializes the given struct as TOML into the response body.
-func (c *Context) TOML(code int, obj interface{}) {
+func (c *Context) TOML(code int, obj any) {
 	c.Render(code, render.TOML{Data: obj})
 }
 
@@ -1056,11 +1060,17 @@ func (c *Context) FileFromFS(filepath string, fs http.FileSystem) {
 	http.FileServer(fs).ServeHTTP(c.Writer, c.Request)
 }
 
+var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+func escapeQuotes(s string) string {
+	return quoteEscaper.Replace(s)
+}
+
 // FileAttachment writes the specified file into the body stream in an efficient way
 // On the client side, the file will typically be downloaded with the given filename
 func (c *Context) FileAttachment(filepath, filename string) {
 	if isASCII(filename) {
-		c.Writer.Header().Set("Content-Disposition", `attachment; filename="`+filename+`"`)
+		c.Writer.Header().Set("Content-Disposition", `attachment; filename="`+escapeQuotes(filename)+`"`)
 	} else {
 		c.Writer.Header().Set("Content-Disposition", `attachment; filename*=UTF-8''`+url.QueryEscape(filename))
 	}
@@ -1153,7 +1163,7 @@ func (c *Context) NegotiateFormat(offered ...string) string {
 			// According to RFC 2616 and RFC 2396, non-ASCII characters are not allowed in headers,
 			// therefore we can just iterate over the string without casting it into []rune
 			i := 0
-			for ; i < len(accepted); i++ {
+			for ; i < len(accepted) && i < len(offer); i++ {
 				if accepted[i] == '*' || offer[i] == '*' {
 					return offer
 				}
@@ -1178,9 +1188,16 @@ func (c *Context) SetAccepted(formats ...string) {
 /***** GOLANG.ORG/X/NET/CONTEXT *****/
 /************************************/
 
+// hasRequestContext returns whether c.Request has Context and fallback.
+func (c *Context) hasRequestContext() bool {
+	hasFallback := c.engine != nil && c.engine.ContextWithFallback
+	hasRequestContext := c.Request != nil && c.Request.Context() != nil
+	return hasFallback && hasRequestContext
+}
+
 // Deadline returns that there is no deadline (ok==false) when c.Request has no Context.
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	if !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {
+	if !c.hasRequestContext() {
 		return
 	}
 	return c.Request.Context().Deadline()
@@ -1188,7 +1205,7 @@ func (c *Context) Deadline() (deadline time.Time, ok bool) {
 
 // Done returns nil (chan which will wait forever) when c.Request has no Context.
 func (c *Context) Done() <-chan struct{} {
-	if !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {
+	if !c.hasRequestContext() {
 		return nil
 	}
 	return c.Request.Context().Done()
@@ -1196,7 +1213,7 @@ func (c *Context) Done() <-chan struct{} {
 
 // Err returns nil when c.Request has no Context.
 func (c *Context) Err() error {
-	if !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {
+	if !c.hasRequestContext() {
 		return nil
 	}
 	return c.Request.Context().Err()
@@ -1217,7 +1234,7 @@ func (c *Context) Value(key any) any {
 			return val
 		}
 	}
-	if !c.engine.ContextWithFallback || c.Request == nil || c.Request.Context() == nil {
+	if !c.hasRequestContext() {
 		return nil
 	}
 	return c.Request.Context().Value(key)

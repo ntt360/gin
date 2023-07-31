@@ -3,7 +3,6 @@
 // license that can be found in the LICENSE file.
 
 //go:build !nomsgpack
-// +build !nomsgpack
 
 package render
 
@@ -14,7 +13,7 @@ import (
 )
 
 // Check interface implemented here to support go build tag nomsgpack.
-// See: https://github.com/ntt360/gin/pull/1852/
+// See: https://github.com/gin-gonic/gin/pull/1852/
 var (
 	_ Render = MsgPack{}
 )
