@@ -46,7 +46,7 @@ var DefaultErrorWriter io.Writer = os.Stderr
 var (
 	ginMode            = debugCode
 	modeName           = DebugMode
-	jsonpCallbackRegex = "^[\\w-.]{1,30}$"
+	jsonpCallbackRegex = "^[\\w-.]{1,64}$"
 )
 
 func init() {
