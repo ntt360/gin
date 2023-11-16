@@ -1,12 +1,16 @@
 package gin
 
 import (
+	"context"
+	"io"
+	"net/http"
+
 	"github.com/ntt360/gin/internal/rsp"
 	"github.com/ntt360/gin/internal/valid/binding"
 	r "github.com/ntt360/gin/rsp"
-	"io"
-	"net/http"
 )
+
+const TraceContextKey = "traceCtx"
 
 func (c *Context) Valid(obj any) error {
 	b := binding.Default(c.Request.Method, c.ContentType())
@@ -111,4 +115,14 @@ func (c *Context) JSONPErr(val ...rsp.JSVal) {
 	}
 
 	c.JSONP(http.StatusOK, rel)
+}
+
+// TraceCtx get trace context with key
+func (c *Context) TraceCtx() context.Context {
+	tCtx, ok := c.Get(TraceContextKey)
+	if ok {
+		return tCtx.(context.Context)
+	}
+
+	return context.TODO()
 }
