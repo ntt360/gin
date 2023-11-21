@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/ntt360/gin/internal/rsp"
 	"github.com/ntt360/gin/internal/valid/binding"
@@ -125,4 +126,11 @@ func (c *Context) TraceCtx() context.Context {
 	}
 
 	return context.TODO()
+}
+
+// QueryAll return all Get Query keys with values
+func (c *Context) QueryAll() url.Values {
+	c.initQueryCache()
+
+	return c.queryCache
 }
