@@ -959,7 +959,7 @@ func (c *Context) SecureJSON(code int, obj any) {
 // It adds padding to response body to request data from a server residing in a different domain than the client.
 // It also sets the Content-Type as "application/javascript".
 func (c *Context) JSONP(code int, obj any) {
-	callback := c.DefaultQuery("callback", "")
+	callback := c.DefaultQuery(jsonpCallbackName, "")
 	if callback == "" {
 		c.Render(code, render.JSON{Data: obj})
 		return

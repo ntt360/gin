@@ -44,9 +44,8 @@ var DefaultWriter io.Writer = os.Stdout
 var DefaultErrorWriter io.Writer = os.Stderr
 
 var (
-	ginMode            = debugCode
-	modeName           = DebugMode
-	jsonpCallbackRegex = "^[\\w-.]{1,64}$"
+	ginMode  = debugCode
+	modeName = DebugMode
 )
 
 func init() {

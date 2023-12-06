@@ -13,6 +13,19 @@ import (
 
 const TraceContextKey = "traceCtx"
 
+var (
+	jsonpCallbackRegex = "^[\\w-.]{1,64}$"
+	jsonpCallbackName  = "callback"
+)
+
+func SetJsonpCallbackName(name string) {
+	jsonpCallbackName = name
+}
+
+func SetJsonpCallbackRegex(regex string) {
+	jsonpCallbackRegex = regex
+}
+
 func (c *Context) Valid(obj any) error {
 	b := binding.Default(c.Request.Method, c.ContentType())
 	return c.ShouldBindWith(obj, b)
