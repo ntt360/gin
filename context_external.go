@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 
 	"github.com/ntt360/gin/internal/rsp"
 	"github.com/ntt360/gin/internal/valid/binding"
@@ -14,7 +15,7 @@ import (
 const TraceContextKey = "traceCtx"
 
 var (
-	jsonpCallbackRegex = "^[\\w-.]{1,64}$"
+	jsonpCallbackRegex = regexp.MustCompile("^[\\w-.]{1,64}$")
 	jsonpCallbackName  = "callback"
 )
 
@@ -23,7 +24,7 @@ func SetJsonpCallbackName(name string) {
 }
 
 func SetJsonpCallbackRegex(regex string) {
-	jsonpCallbackRegex = regex
+	jsonpCallbackRegex = regexp.MustCompile(regex)
 }
 
 func (c *Context) Valid(obj any) error {
