@@ -15,7 +15,6 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"sync"
 	"time"
@@ -965,7 +964,7 @@ func (c *Context) JSONP(code int, obj any) {
 		return
 	}
 
-	if !regexp.MustCompile(jsonpCallbackRegex).MatchString(callback) {
+	if !jsonpCallbackRegex.MatchString(callback) {
 		c.AbortWithStatus(http.StatusForbidden)
 		return
 	}
