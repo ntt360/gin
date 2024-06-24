@@ -43,7 +43,7 @@ func (e *Error) Error() string {
 }
 
 // Unwrap provides compatibility for Go 1.13 error chains.
-func (e *Error) Unwrap() error { return e }
+func (e *Error) Unwrap() error { return e.CauseErr }
 
 func (e *Error) Format(s fmt.State, verb rune) {
 	switch verb {

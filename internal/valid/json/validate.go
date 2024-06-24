@@ -1,13 +1,15 @@
 package json
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 
-	"github.com/ntt360/gin/internal/valid/rule"
 	"github.com/tidwall/gjson"
+
+	"github.com/ntt360/gin/internal/valid/rule"
 )
 
 func Validate(jsonMap gjson.Result, m any, validTagName string) error {
@@ -52,6 +54,10 @@ func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 		if !field.disableValid {
 			_, err = valid(field)
 			if err != nil {
+				rel := errors.Is(err, ErrorContinue)
+				if rel {
+					return true, nil
+				}
 				return false, err
 			}
 		}
@@ -69,6 +75,13 @@ func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 		}
 
 		deepValid, err = valid(field)
+		if err != nil {
+			if errors.Is(err, ErrorContinue) {
+				return true, nil
+			}
+			return false, err
+		}
+
 		tmpMap := reflect.MakeMap(val.Type())
 
 		var needValidKey bool
@@ -138,6 +151,9 @@ func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 		// valid array self
 		deepValid, err = valid(field)
 		if err != nil {
+			if errors.Is(err, ErrorContinue) {
+				return true, nil
+			}
 			return false, err
 		}
 
@@ -156,7 +172,7 @@ func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 			field.PushTrack(strconv.Itoa(j))
 			field.parent = val.Type()
 			field.self = childTyp
-			
+
 			if j == 0 {
 				field.CurInheritTag = field.CurTag
 				field.CurTag = ""
@@ -189,6 +205,11 @@ func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 		// valid struct self
 		_, err = valid(field)
 		if err != nil {
+			// if self omitempty or need skipped, will skip to next field
+			if errors.Is(err, ErrorContinue) {
+				return true, nil
+			}
+
 			return false, err
 		}
 
@@ -269,6 +290,8 @@ func recursiveValid(val reflect.Value, field *Field) (bool, error) {
 
 		val.Set(reflect.ValueOf(valData.Value()))
 		return false, nil
+	default:
+		return true, nil
 	}
 
 	return false, err
@@ -319,7 +342,8 @@ func trySetVal(val reflect.Value, f *Field) (e error) {
 		}
 
 		val.SetString(rel)
-
+	default:
+		return nil
 	}
 
 	return nil
@@ -423,7 +447,7 @@ func valid(f *Field) (bool, error) {
 
 		if f.CurRule.Name == "omitempty" {
 			if !f.Exist() { //
-				return false, nil
+				return false, ErrorContinue
 			}
 
 			// skip to next
