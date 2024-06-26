@@ -379,9 +379,18 @@ func mapKeyValid(key string, rules rule.Inherits, f Field) error {
 	for _, r := range rules {
 		f.CurRule = r
 		if f.CurRule.Name == "omitempty" {
+			if !f.Empty() {
+				return nil
+			}
+		}
+
+		if f.CurRule.Name == "omitabsent" {
 			if !f.Exist() {
 				return nil
 			}
+
+			// skip to next
+			continue
 		}
 
 		// dive not allow between keys and endkeys
@@ -446,7 +455,16 @@ func valid(f *Field) (bool, error) {
 		f.CurRule = r
 
 		if f.CurRule.Name == "omitempty" {
-			if !f.Exist() { //
+			if f.Empty() { //
+				return false, ErrorContinue
+			}
+
+			// skip to next
+			continue
+		}
+
+		if f.CurRule.Name == "omitabsent" {
+			if !f.Exist() {
 				return false, ErrorContinue
 			}
 

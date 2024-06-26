@@ -1,12 +1,14 @@
 package json
 
 import (
-	"github.com/ntt360/gin/internal/valid/rule"
-	"github.com/tidwall/gjson"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/tidwall/gjson"
+
+	"github.com/ntt360/gin/internal/valid/rule"
 )
 
 const (
@@ -209,6 +211,30 @@ func (f *Field) DefaultValExits() bool {
 
 func (f *Field) DefaultVal() string {
 	return f.defaultVal
+}
+
+func (f *Field) Empty() bool {
+	if f.DefaultValExits() {
+		return false
+	}
+
+	curVal := f.data.Get(f.CurDataIdx)
+	ok := curVal.Exists()
+	if !ok {
+		return true
+	}
+
+	switch curVal.Type {
+	case gjson.Null, gjson.False:
+		return true
+	case gjson.String:
+		return len(curVal.String()) == 0
+	case gjson.Number:
+		return curVal.Float() == 0
+	default:
+		return false
+	}
+
 }
 
 func (f *Field) Exist() bool {

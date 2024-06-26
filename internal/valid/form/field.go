@@ -1,12 +1,13 @@
 package form
 
 import (
-	"github.com/ntt360/gin/internal/valid/rule"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ntt360/gin/internal/valid/rule"
 )
 
 const (
@@ -179,6 +180,28 @@ func (f *Field) DefaultValExits() bool {
 
 func (f *Field) DefaultVal() string {
 	return f.defaultVal
+}
+
+func (f *Field) Empty() bool {
+	// check default value exist first
+	if f.DefaultValExits() {
+		return false
+	}
+
+	v, ok := f.data.Value(f.CurDataIdx)
+	if !ok {
+		return true
+	}
+
+	// form.Value are always []string
+	relVal, _ := v.Interface().([]string)
+	for _, s := range relVal {
+		if s != "" {
+			return false
+		}
+	}
+
+	return true
 }
 
 func (f *Field) Exist() bool {

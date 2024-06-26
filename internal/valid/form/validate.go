@@ -325,7 +325,16 @@ func valid(f *Field) (bool, error) {
 		f.CurRule = r
 
 		if f.CurRule.Name == "omitempty" {
-			if !f.Exist() { //
+			if f.Empty() { //
+				return false, nil
+			}
+
+			// skip to next
+			continue
+		}
+
+		if f.CurRule.Name == "omitabsent" {
+			if !f.Exist() {
 				return false, nil
 			}
 

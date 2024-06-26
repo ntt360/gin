@@ -53,6 +53,9 @@ type Field interface {
 	// Exist data exist or not
 	Exist() bool
 
+	// Empty data is empty or not
+	Empty() bool
+	
 	// IsBool data is bool value or not
 	IsBool() bool
 
