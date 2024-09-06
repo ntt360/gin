@@ -1,6 +1,13 @@
 package rsp
 
-import "github.com/ntt360/gin/internal/rsp"
+// JSONVal http response common data.
+type JSONVal struct {
+	Code int         `json:"errno"`
+	Msg  string      `json:"msg"`
+	Data interface{} `json:"data"`
+}
+
+type JSVal func(val *JSONVal)
 
 const (
 	CodeOK  = 0
@@ -10,20 +17,20 @@ const (
 	MsgFailed  = "Failed"
 )
 
-func WithData(data any) rsp.JSVal {
-	return func(val *rsp.JSONVal) {
+func WithData(data any) JSVal {
+	return func(val *JSONVal) {
 		val.Data = data
 	}
 }
 
-func WithMsg(msg string) rsp.JSVal {
-	return func(val *rsp.JSONVal) {
+func WithMsg(msg string) JSVal {
+	return func(val *JSONVal) {
 		val.Msg = msg
 	}
 }
 
-func WithCode(code int) rsp.JSVal {
-	return func(val *rsp.JSONVal) {
+func WithCode(code int) JSVal {
+	return func(val *JSONVal) {
 		val.Code = code
 	}
 }

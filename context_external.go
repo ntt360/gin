@@ -2,12 +2,12 @@ package gin
 
 import (
 	"context"
+	"github.com/ntt360/gin/rsp"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
 
-	"github.com/ntt360/gin/internal/rsp"
 	"github.com/ntt360/gin/internal/valid/binding"
 	r "github.com/ntt360/gin/rsp"
 )
@@ -15,7 +15,7 @@ import (
 const TraceContextKey = "traceCtx"
 
 var (
-	jsonpCallbackRegex = regexp.MustCompile("^[\\w-.]{1,64}$")
+	jsonpCallbackRegex = regexp.MustCompile(`^[\w-.]{1,64}$`)
 	jsonpCallbackName  = "callback"
 )
 
